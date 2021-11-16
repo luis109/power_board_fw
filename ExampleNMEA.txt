@@ -1,0 +1,21 @@
+Motors
+$M,3,S,1,100*2d
+$M,3,G*39
+$M,3,I,0,75*05
+
+PWMs
+$P,3,S,100*2d
+$P,3,G*24
+$P,3,I,100*37
+
+Relays
+$R,3,S,0*2e
+$R,3,G*26
+$R,3,I,0*34
+
+
+
+Testing
+$R,0,S,1*2c //Relay itself
+$R,3,S,1*2f //PWM(5) 5V
+$R,4,S,1*28 //PWM(1) 12V
