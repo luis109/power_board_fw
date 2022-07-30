@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Definitions.hpp>
-#include <CommandUtils.hpp>
+#include <CommandProtocol.hpp>
 #include <RelayDriver.hpp>
 #include <PWMOutputDriver.hpp>
 #include <MotorDriver.hpp>
@@ -32,7 +32,7 @@ MotorDriver g_mtr[_MTR_NUM] = {MotorDriver(&g_pca[0], _PIN_ENABLE_MTR1, _PIN_IN1
                                MotorDriver(&g_pca[1], _PIN_ENABLE_MTR6, _PIN_IN1_MTR6, _PIN_IN2_MTR6)};
 
 //Command interface
-CommandUtils g_cmd_interface;
+CommandProtocol g_cmd_interface;
 Command g_cmd;
 
 bool

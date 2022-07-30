@@ -1,9 +1,9 @@
-#ifndef CommandUtils_hpp
-#define CommandUtils_hpp
+#ifndef CommandProtocol_hpp
+#define CommandProtocol_hpp
 
 #include <SerialUtils.hpp>
 
-#define CMDUTIL_BUFFER_SIZE 128
+#define CP_BUFFER_SIZE 128
 
 enum
 {
@@ -19,24 +19,12 @@ enum
   CMD_TYPE_INFO = 'I'
 };
 
-enum
-{
-  RPLY_OK = 'O',
-  RPLY_FAILED = 'F'
-};
-
-enum
-{
-  DELIM_INITIALIZER = '$',
-  DELIM_TERMINATOR = '*'
-};
-
 struct
 Command
 {
+  char cmd_type;
 	char dev;
   uint8_t dev_num;
-  char cmd_type;
   uint8_t val[2];
 
   Command()
@@ -47,9 +35,9 @@ Command
   void
   reset()
   {
+    cmd_type = '\0';
     dev = '\0';
     dev_num = -1;
-    cmd_type = '\0';
     val[0] = -1;
     val[1] = -1;
   }
@@ -63,22 +51,24 @@ Command
   }
 };
 
-class CommandUtils
+class CommandProtocol
 {
   public:
     void begin(int baud);
 
     bool receiveCommand(Command& cmd);
     bool sendCommand(Command& cmd);
-    bool sendReply(uint8_t rply);
+    bool sendError(char* error_msg);
+    bool sendOk();
     bool sendHeartbeat();
 
   private:
+    bool sendString(char* msg);
     bool decode(Command& cmd);
     bool encode(Command& cmd);
 
-    char m_bfr[CMDUTIL_BUFFER_SIZE];
-    char m_msg[CMDUTIL_BUFFER_SIZE];
+    char m_bfr[CP_BUFFER_SIZE];
+    char m_msg[CP_BUFFER_SIZE];
 };
 
 #endif

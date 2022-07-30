@@ -1,10 +1,10 @@
-#include <CommandUtils.hpp>
+#include <CommandProtocol.hpp>
 
 uint8_t xor_check(char *data)
 {
   uint8_t csum = 0x00;
   uint8_t t = 0;
-  while (data[t] != DELIM_TERMINATOR)
+  while (data[t] != '*')
   {
     csum ^= data[t];
     t++;
@@ -13,20 +13,20 @@ uint8_t xor_check(char *data)
 }
 
 void
-CommandUtils::begin(int baud)
+CommandProtocol::begin(int baud)
 {
   SerialUtils::begin(baud);
 }
 
 bool 
-CommandUtils::receiveCommand(Command& cmd)
+CommandProtocol::receiveCommand(Command& cmd)
 {
-  uint8_t length = SerialUtils::receiveMessage(m_bfr, CMDUTIL_BUFFER_SIZE);
+  uint8_t length = SerialUtils::receiveMessage(m_bfr, CP_BUFFER_SIZE);
 
   if (length == 0)
     return false;
   
-  if (m_bfr[0] != DELIM_INITIALIZER)
+  if (m_bfr[0] != '$')
     return false;
 
   uint16_t csum;
@@ -49,7 +49,7 @@ CommandUtils::receiveCommand(Command& cmd)
 }
 
 bool
-CommandUtils::decode(Command& cmd)
+CommandProtocol::decode(Command& cmd)
 {
   //Clear command
   cmd.reset();
@@ -95,14 +95,14 @@ CommandUtils::decode(Command& cmd)
 }
 
 bool
-CommandUtils::encode(Command& cmd)
+CommandProtocol::encode(Command& cmd)
 {
   if (cmd.dev == DEV_MOTOR)
   {
     uint8_t size;
-    size = sprintf(m_msg, "%c,%u,%c,%u,%u*", cmd.dev,
+    size = sprintf(m_msg, "%c,%c,%u,%u,%u*", cmd.cmd_type,
+                                             cmd.dev,
                                              cmd.dev_num,
-                                             cmd.cmd_type,
                                              cmd.val[0],
                                              cmd.val[1]);
 
@@ -112,7 +112,8 @@ CommandUtils::encode(Command& cmd)
   else if (cmd.dev == DEV_PWM || cmd.dev == DEV_RELAY)
   {
     uint8_t size;
-    size = sprintf(m_msg, "%c,%u,%c,%u*", cmd.dev,
+    size = sprintf(m_msg, "%c,%c,%u,%u*", cmd.cmd_type,
+                                          cmd.dev,
                                           cmd.dev_num,
                                           cmd.cmd_type,
                                           cmd.val[0]);
@@ -123,37 +124,27 @@ CommandUtils::encode(Command& cmd)
   else
     return false;
 
-  Serial.print("Message: ");Serial.println(m_msg);
+  // Serial.print("Send: ");Serial.println(m_msg);
   return true;
 }
 
 bool 
-CommandUtils::sendCommand(Command& cmd)
+CommandProtocol::sendCommand(Command& cmd)
 {
   //Should only send CMD_TYPE_INFO
   if (cmd.cmd_type != CMD_TYPE_INFO)
     return false;
-    
+  
   if (!encode(cmd))
     return false;
 
-  if (sprintf(m_bfr, "$%s%x\n", m_msg, xor_check(m_msg)) < 0)
-    return false;
-
-  SerialUtils::sendMessage(m_bfr);
-
-  return true;
+  return sendString(m_msg);
 }
 
-bool
-CommandUtils::sendReply(uint8_t rply)
+bool 
+CommandProtocol::sendString(char* msg)
 {
-  if (rply == RPLY_OK)
-    sprintf(m_msg, "OK*");
-  else if (rply == RPLY_FAILED)
-    sprintf(m_msg, "FAILED*");
-
-  if (sprintf(m_bfr, "$%s%x", m_msg, xor_check(m_msg)) < 0)
+  if (sprintf(m_bfr, "$%s%02x\n", msg, xor_check(msg)) < 0)
     return false;
 
   SerialUtils::sendMessage(m_bfr);
@@ -161,11 +152,23 @@ CommandUtils::sendReply(uint8_t rply)
 }
 
 bool
-CommandUtils::sendHeartbeat()
+CommandProtocol::sendOk()
 {
-  if (sprintf(m_bfr, "$HB*0a") < 0)
-    return false;
+  char* msg = "OK*";
+  return sendString(msg);
+}
 
-  SerialUtils::sendMessage(m_bfr);
-  return true;
+bool
+CommandProtocol::sendError(char* error_msg)
+{
+  char msg[CP_BUFFER_SIZE];
+  sprintf(msg, "ERROR,%s*", error_msg);
+  return sendString(msg);
+}
+
+bool
+CommandProtocol::sendHeartbeat()
+{
+  char* msg = "HB*";
+  return sendString(msg);
 }
