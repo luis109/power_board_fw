@@ -4,7 +4,7 @@ uint8_t xor_check(char *data)
 {
   uint8_t csum = 0x00;
   uint8_t t = 0;
-  while (data[t] != '*')
+  while (data[t] != '\0')
   {
     csum ^= data[t];
     t++;
@@ -40,7 +40,7 @@ CommandProtocol::receiveString(char* str)
   // Serial.print("Checksum (calc): ");
   // Serial.println((int)xor_check(&m_bfr[1]));
 
-  if (csum != (uint16_t)xor_check(&m_bfr[1]))
+  if (csum != (uint16_t)xor_check(str))
     return false;
 
   return true;
@@ -49,7 +49,7 @@ CommandProtocol::receiveString(char* str)
 bool 
 CommandProtocol::sendString(char* msg)
 {
-  if (sprintf(m_bfr, "$%s%02x\n", msg, xor_check(msg)) < 0)
+  if (sprintf(m_bfr, "$%s*%02x\n", msg, xor_check(msg)) < 0)
     return false;
 
   SerialUtils::sendMessage(m_bfr);
@@ -109,7 +109,6 @@ CommandProtocol::encode(Command& cmd)
     if (cmd.val[i] != 65535) // Invalid (uint16_t)(-1)
       lenght += sprintf(&m_msg[lenght], ",%u", cmd.val[i]);
   }
-  sprintf(&m_msg[lenght], "%c", '*');
 
   return true;
 }
@@ -142,7 +141,7 @@ CommandProtocol::sendCommand(Command& cmd)
 bool
 CommandProtocol::sendOk()
 {
-  char msg[] = "OK*";
+  char msg[] = "OK";
   return sendString(msg);
 }
 
@@ -150,13 +149,13 @@ bool
 CommandProtocol::sendError(char* error_msg)
 {
   char msg[CP_BUFFER_SIZE];
-  sprintf(msg, "ERROR,%s*", error_msg);
+  sprintf(msg, "ERROR,%s", error_msg);
   return sendString(msg);
 }
 
 bool
 CommandProtocol::sendHeartbeat()
 {
-  char msg[] = "HB*";
+  char msg[] = "HB";
   return sendString(msg);
 }
