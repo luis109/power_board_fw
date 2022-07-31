@@ -47,4 +47,7 @@
 
 #define _MTR_NUM 6
 
+//Power Control
+#define _PIN_PWR 8
+
 #endif
