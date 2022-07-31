@@ -57,11 +57,8 @@ class CommandProtocol
   private:
     bool sendString(char* msg);
     bool receiveString(char* msg);
-    bool decode(Command& cmd);
-    bool encode(Command& cmd);
-
-    char m_bfr[CP_BUFFER_SIZE];
-    char m_msg[CP_BUFFER_SIZE];
+    bool decode(Command& cmd, char* str);
+    bool encode(Command& cmd, char* str);
 };
 
 #endif

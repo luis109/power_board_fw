@@ -22,16 +22,16 @@ CommandProtocol::begin(int baud)
 bool 
 CommandProtocol::receiveString(char* str)
 {
-  uint8_t length = SerialUtils::receiveMessage(m_bfr, CP_BUFFER_SIZE);
+  uint8_t length = SerialUtils::receiveMessage(str, CP_BUFFER_SIZE);
 
   if (length == 0)
     return false;
   
-  if (m_bfr[0] != '$')
+  if (str[0] != '$')
     return false;
 
   uint16_t csum;
-  sscanf(&m_bfr[1], "%[^*]*%x%*s", str, &csum);
+  sscanf(&str[1], "%[^*]*%x%*s", str, &csum);
 
   // Serial.print("Message: ");
   // Serial.println(str);
@@ -49,26 +49,28 @@ CommandProtocol::receiveString(char* str)
 bool 
 CommandProtocol::sendString(char* msg)
 {
-  if (sprintf(m_bfr, "$%s*%02x\n", msg, xor_check(msg)) < 0)
+  char bfr[CP_BUFFER_SIZE];
+  if (sprintf(bfr, "$%s*%02x\n", msg, xor_check(msg)) < 0)
     return false;
 
-  SerialUtils::sendMessage(m_bfr);
+  SerialUtils::sendMessage(bfr);
   return true;
 }
 
 bool
-CommandProtocol::decode(Command& cmd)
+CommandProtocol::decode(Command& cmd, char* str)
 {
   //Clear command
   cmd.reset();
 
   uint8_t filled_args;
-  filled_args = sscanf(m_msg, "%c,%c,%u,%u,%u", &cmd.cmd_type,
-                                                &cmd.dev,
-                                                &cmd.dev_num,
-                                                &cmd.val[0],
-                                                &cmd.val[1]);
+  filled_args = sscanf(str, "%c,%c,%u,%u,%u", &cmd.cmd_type,
+                                              &cmd.dev,
+                                              &cmd.dev_num,
+                                              &cmd.val[0],
+                                              &cmd.val[1]);
   
+  // Sanity checks
   if (filled_args < 3)
     return false;
   
@@ -94,12 +96,12 @@ CommandProtocol::decode(Command& cmd)
 }
 
 bool
-CommandProtocol::encode(Command& cmd)
+CommandProtocol::encode(Command& cmd, char* str)
 {
   uint8_t lenght;
-  lenght = sprintf(m_msg, "%c,%c,%u", cmd.cmd_type,
-                                       cmd.dev,
-                                       cmd.dev_num);
+  lenght = sprintf(str, "%c,%c,%u", cmd.cmd_type,
+                                    cmd.dev,
+                                    cmd.dev_num);
 
   if (lenght < 0)                          
     return false;
@@ -107,7 +109,7 @@ CommandProtocol::encode(Command& cmd)
   for (uint8_t i = 0; i < 2; i++)
   {
     if (cmd.val[i] != 65535) // Invalid (uint16_t)(-1)
-      lenght += sprintf(&m_msg[lenght], ",%u", cmd.val[i]);
+      lenght += sprintf(&str[lenght], ",%u", cmd.val[i]);
   }
 
   return true;
@@ -116,10 +118,11 @@ CommandProtocol::encode(Command& cmd)
 bool 
 CommandProtocol::receiveCommand(Command& cmd)
 {
-  if (!receiveString(m_msg))
+  char bfr[CP_BUFFER_SIZE];
+  if (!receiveString(bfr))
     return false;
 
-  if (!decode(cmd))
+  if (!decode(cmd, bfr))
     return false;
 
   return true;
@@ -132,10 +135,11 @@ CommandProtocol::sendCommand(Command& cmd)
   if (cmd.cmd_type != CMD_TYPE_INFO)
     return false;
   
-  if (!encode(cmd))
+  char str[CP_BUFFER_SIZE];
+  if (!encode(cmd, str))
     return false;
 
-  return sendString(m_msg);
+  return sendString(str);
 }
 
 bool
