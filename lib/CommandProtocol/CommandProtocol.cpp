@@ -81,7 +81,7 @@ CommandProtocol::decode(Command& cmd, char* str)
   }
   else
   {
-    if (cmd.dev == DEV_MOTOR)
+    if (cmd.dev == CMD_DEV_MOTOR)
     {
       if (filled_args != 5)
         return false;

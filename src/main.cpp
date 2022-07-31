@@ -40,15 +40,15 @@ stateMachine(Command& cmd)
 {
   switch (cmd.dev)
   {
-    case DEV_MOTOR:
+    case CMD_DEV_MOTOR:
       /* code */
       break;
     
-    case DEV_PWM:
+    case CMD_DEV_PWM:
       /* code */
       break;
     
-    case DEV_RELAY:
+    case CMD_DEV_RELAY:
       if (cmd.dev_num > _RELAY_NUM)
         return false;
 

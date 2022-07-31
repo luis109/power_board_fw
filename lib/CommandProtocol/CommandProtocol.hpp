@@ -7,9 +7,9 @@
 
 enum
 {
-  DEV_MOTOR = 'M',
-  DEV_PWM = 'P',
-  DEV_RELAY = 'R'
+  CMD_DEV_MOTOR = 'M',
+  CMD_DEV_PWM = 'P',
+  CMD_DEV_RELAY = 'R'
 };
 
 enum
