@@ -17,13 +17,13 @@
 #define _PIN_IN2_MTR1 14
 #define _PIN_IN1_MTR1 15
 
-#define _PIN_ENABLE_MTR2 10
-#define _PIN_IN2_MTR2 11
+#define _PIN_ENABLE_MTR2 11
+#define _PIN_IN2_MTR2 10
 #define _PIN_IN1_MTR2 12
 
-#define _PIN_ENABLE_MTR3 7
-#define _PIN_IN2_MTR3 6
-#define _PIN_IN1_MTR3 5
+#define _PIN_ENABLE_MTR3 8
+#define _PIN_IN2_MTR3 7
+#define _PIN_IN1_MTR3 9
 
 //PCA9685 1
 #define _PIN_PWM_0 3
@@ -33,16 +33,16 @@
 #define _PIN_PWM_4 7
 #define _PWM_NUM 5
 
-#define _PIN_ENABLE_MTR4 2
-#define _PIN_IN2_MTR4 1
+#define _PIN_ENABLE_MTR4 1
+#define _PIN_IN2_MTR4 2
 #define _PIN_IN1_MTR4 0
 
-#define _PIN_ENABLE_MTR5 11
-#define _PIN_IN2_MTR5 12
+#define _PIN_ENABLE_MTR5 12
+#define _PIN_IN2_MTR5 11
 #define _PIN_IN1_MTR5 13
 
-#define _PIN_ENABLE_MTR6 8
-#define _PIN_IN2_MTR6 9
+#define _PIN_ENABLE_MTR6 9
+#define _PIN_IN2_MTR6 8
 #define _PIN_IN1_MTR6 10
 
 #define _MTR_NUM 6
