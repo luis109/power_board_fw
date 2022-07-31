@@ -97,34 +97,21 @@ CommandProtocol::decode(Command& cmd)
 bool
 CommandProtocol::encode(Command& cmd)
 {
-  if (cmd.dev == DEV_MOTOR)
-  {
-    uint8_t size;
-    size = sprintf(m_msg, "%c,%c,%u,%u,%u*", cmd.cmd_type,
-                                             cmd.dev,
-                                             cmd.dev_num,
-                                             cmd.val[0],
-                                             cmd.val[1]);
+  uint8_t lenght;
+  lenght = sprintf(m_msg, "%c,%c,%u", cmd.cmd_type,
+                                       cmd.dev,
+                                       cmd.dev_num);
 
-    if (size < 0)                                                  
-      return false;
-  }
-  else if (cmd.dev == DEV_PWM || cmd.dev == DEV_RELAY)
-  {
-    uint8_t size;
-    size = sprintf(m_msg, "%c,%c,%u,%u*", cmd.cmd_type,
-                                          cmd.dev,
-                                          cmd.dev_num,
-                                          cmd.cmd_type,
-                                          cmd.val[0]);
-    
-    if (size < 0)
-      return false;
-  }
-  else
+  if (lenght < 0)                          
     return false;
 
-  // Serial.print("Send: ");Serial.println(m_msg);
+  for (uint8_t i = 0; i < 2; i++)
+  {
+    if (cmd.val[i] != 65535) // Invalid (uint16_t)(-1)
+      lenght += sprintf(&m_msg[lenght], ",%u", cmd.val[i]);
+  }
+  sprintf(&m_msg[lenght], "%c", '*');
+
   return true;
 }
 
