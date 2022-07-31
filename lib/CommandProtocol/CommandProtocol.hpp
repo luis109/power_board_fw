@@ -24,8 +24,8 @@ Command
 {
   char cmd_type;
 	char dev;
-  uint8_t dev_num;
-  uint8_t val[2];
+  uint16_t dev_num;
+  uint16_t val[2];
 
   Command()
   {
@@ -40,14 +40,6 @@ Command
     dev_num = -1;
     val[0] = -1;
     val[1] = -1;
-  }
-
-  void
-  typeConvert(uint16_t aux[3])
-  {
-    dev_num = (uint8_t)aux[0];
-    val[0] = (uint8_t)aux[1];
-    val[1] = (uint8_t)aux[2];
   }
 };
 
@@ -64,6 +56,7 @@ class CommandProtocol
 
   private:
     bool sendString(char* msg);
+    bool receiveString(char* msg);
     bool decode(Command& cmd);
     bool encode(Command& cmd);
 

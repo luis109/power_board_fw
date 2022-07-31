@@ -18,8 +18,9 @@ CommandProtocol::begin(int baud)
   SerialUtils::begin(baud);
 }
 
+
 bool 
-CommandProtocol::receiveCommand(Command& cmd)
+CommandProtocol::receiveString(char* str)
 {
   uint8_t length = SerialUtils::receiveMessage(m_bfr, CP_BUFFER_SIZE);
 
@@ -30,10 +31,10 @@ CommandProtocol::receiveCommand(Command& cmd)
     return false;
 
   uint16_t csum;
-  sscanf(&m_bfr[1], "%[^*]*%x%*s", m_msg, &csum);
+  sscanf(&m_bfr[1], "%[^*]*%x%*s", str, &csum);
 
   // Serial.print("Message: ");
-  // Serial.println(m_msg);
+  // Serial.println(str);
   // Serial.print("Checksum (msg): ");
   // Serial.println((int)csum);
   // Serial.print("Checksum (calc): ");
@@ -42,9 +43,16 @@ CommandProtocol::receiveCommand(Command& cmd)
   if (csum != (uint16_t)xor_check(&m_bfr[1]))
     return false;
 
-  if (!decode(cmd))
+  return true;
+}
+
+bool 
+CommandProtocol::sendString(char* msg)
+{
+  if (sprintf(m_bfr, "$%s%02x\n", msg, xor_check(msg)) < 0)
     return false;
 
+  SerialUtils::sendMessage(m_bfr);
   return true;
 }
 
@@ -54,43 +62,34 @@ CommandProtocol::decode(Command& cmd)
   //Clear command
   cmd.reset();
 
-  // sscanf cant assignt to uint8_t, minimum is uint16_t, 
-  // so we must scan to temporary uint16_t variables and 
-  // convert after. This sets values to invalid.
-  uint16_t aux[] = {255, 255, 255};
-
-  if (m_msg[0] == DEV_MOTOR)
+  uint8_t filled_args;
+  filled_args = sscanf(m_msg, "%c,%c,%u,%u,%u", &cmd.cmd_type,
+                                                &cmd.dev,
+                                                &cmd.dev_num,
+                                                &cmd.val[0],
+                                                &cmd.val[1]);
+  
+  if (filled_args < 3)
+    return false;
+  
+  if (cmd.cmd_type == CMD_TYPE_GET)
   {
-    uint8_t filled_args;
-    filled_args = sscanf(m_msg, "%c,%u,%c,%u,%u", &cmd.dev,
-                                                  &aux[0],
-                                                  &cmd.cmd_type,
-                                                  &aux[1],
-                                                  &aux[2]);
-
-    if (filled_args != 3 && filled_args != 5)// GET command
-      return false;
-  }
-  else if (m_msg[0] == DEV_PWM || m_msg[0] == DEV_RELAY)
-  {
-    uint8_t filled_args;
-    filled_args = sscanf(m_msg, "%c,%u,%c,%u", &cmd.dev,
-                                               &aux[0],
-                                               &cmd.cmd_type,
-                                               &aux[1]);
-
-    if (filled_args != 3 && filled_args != 4)// GET command
+    if (filled_args != 3)
       return false;
   }
   else
-    return false;
+  {
+    if (cmd.dev == DEV_MOTOR)
+    {
+      if (filled_args != 5)
+        return false;
+    }
+    else if (filled_args != 4)
+    {
+      return false;
+    }
+  }
 
-  cmd.typeConvert(aux);
-  // Serial.print("Dev: ");Serial.println(cmd.dev);
-  // Serial.print("Dev_num: ");Serial.println(cmd.dev_num);
-  // Serial.print("Cmd_type: ");Serial.println(cmd.cmd_type);
-  // Serial.print("Val[0]: ");Serial.println(cmd.val[0]);
-  // Serial.print("Val[1]: ");Serial.println(cmd.val[1]);
   return true;
 }
 
@@ -116,6 +115,18 @@ CommandProtocol::encode(Command& cmd)
 }
 
 bool 
+CommandProtocol::receiveCommand(Command& cmd)
+{
+  if (!receiveString(m_msg))
+    return false;
+
+  if (!decode(cmd))
+    return false;
+
+  return true;
+}
+
+bool 
 CommandProtocol::sendCommand(Command& cmd)
 {
   //Should only send CMD_TYPE_INFO
@@ -128,20 +139,10 @@ CommandProtocol::sendCommand(Command& cmd)
   return sendString(m_msg);
 }
 
-bool 
-CommandProtocol::sendString(char* msg)
-{
-  if (sprintf(m_bfr, "$%s%02x\n", msg, xor_check(msg)) < 0)
-    return false;
-
-  SerialUtils::sendMessage(m_bfr);
-  return true;
-}
-
 bool
 CommandProtocol::sendOk()
 {
-  char* msg = "OK*";
+  char msg[] = "OK*";
   return sendString(msg);
 }
 
@@ -156,6 +157,6 @@ CommandProtocol::sendError(char* error_msg)
 bool
 CommandProtocol::sendHeartbeat()
 {
-  char* msg = "HB*";
+  char msg[] = "HB*";
   return sendString(msg);
 }
