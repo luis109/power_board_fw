@@ -35,48 +35,124 @@ MotorDriver g_mtr[_MTR_NUM] = {MotorDriver(&g_pca[0], _PIN_ENABLE_MTR1, _PIN_IN1
 CommandProtocol g_cmd_interface;
 CommandProtocol::Command g_cmd;
 
+// Wakeup Pin
+bool g_wkup_state;
+
+void
+setWakeup(bool state)
+{
+  g_wkup_state = state;
+  digitalWrite(_PIN_PWR, state);
+}
+
 bool
-stateMachine(CommandProtocol::Command& cmd)
+commandDevice(CommandProtocol::Command& cmd)
 {
   switch (cmd.dev)
   {
     case CMD_DEV_MOTOR:
-      /* code */
+      if (cmd.dev_num > _MTR_NUM)
+        return false;
+      else
+        g_cmd_interface.sendOk();
+
+      if (cmd.cmd_type == CMD_TYPE_GET)
+      {
+        cmd.cmd_type = CMD_TYPE_INFO;
+        cmd.val[0] = (uint16_t)g_mtr[cmd.dev_num].getDirection();
+        cmd.val[1] = (uint16_t)g_mtr[cmd.dev_num].getSpeed();
+        g_cmd_interface.sendCommand(cmd);
+      }
+      else if (cmd.cmd_type == CMD_TYPE_SET)
+      {
+        g_mtr[cmd.dev_num].setDirection((bool)cmd.val[0]);
+        g_mtr[cmd.dev_num].setSpeed(cmd.val[1]);
+      }
+      else
+      {
+        g_cmd_interface.sendError("Unsuported message type.");
+        return false;
+      }
       break;
     
     case CMD_DEV_PWM:
-      /* code */
+      if (cmd.dev_num > _PWM_NUM)
+        return false;
+      else
+        g_cmd_interface.sendOk();
+
+      if (cmd.cmd_type == CMD_TYPE_GET)
+      {
+        cmd.cmd_type = CMD_TYPE_INFO;
+        cmd.val[0] = (uint16_t)g_pwm[cmd.dev_num].state();
+        g_cmd_interface.sendCommand(cmd);
+      }
+      else if (cmd.cmd_type == CMD_TYPE_SET)
+      {
+        g_pwm[cmd.dev_num].setOutput(cmd.val[0]);
+      }
+      else
+      {
+        g_cmd_interface.sendError("Unsuported message type.");
+        return false;
+      }
       break;
     
     case CMD_DEV_RELAY:
       if (cmd.dev_num > _RELAY_NUM)
         return false;
+      else
+        g_cmd_interface.sendOk();
 
-      if (cmd.cmd_type == CMD_TYPE_SET)
-      {
-        g_rly[cmd.dev_num].switchTo(cmd.val[0] != 0);
-      }
-      else if (cmd.cmd_type == CMD_TYPE_GET)
+      if (cmd.cmd_type == CMD_TYPE_GET)
       {
         cmd.cmd_type = CMD_TYPE_INFO;
-        cmd.val[0] = (uint8_t)g_rly[cmd.dev_num].state();
-
+        cmd.val[0] = (uint16_t)g_rly[cmd.dev_num].state();
         g_cmd_interface.sendCommand(cmd);
+      }
+      else if (cmd.cmd_type == CMD_TYPE_SET)
+      {
+        g_rly[cmd.dev_num].switchTo(cmd.val[0]);
+      }
+      else
+      {
+        g_cmd_interface.sendError("Unsuported message type.");
+        return false;
       }
       break;
     
+    case CMD_DEV_WAKEUP:
+      g_cmd_interface.sendOk();
+
+      if (cmd.cmd_type == CMD_TYPE_GET)
+      {
+        cmd.cmd_type = CMD_TYPE_INFO;
+        cmd.val[0] = (uint16_t)g_wkup_state;
+        g_cmd_interface.sendCommand(cmd);
+      }
+      else if (cmd.cmd_type == CMD_TYPE_SET)
+      {
+        setWakeup((bool)cmd.val[0]);
+      }
+      else
+      {
+        g_cmd_interface.sendError("Unsuported message type.");
+        return false;
+      }
+      break;
+
     default:
+      g_cmd_interface.sendError("Unsuported device.");
       return false;
   }
-
-  return true;
 }
 
-void setup() 
+void
+setupDevices()
 {
-  // Serial tests
-  g_cmd_interface.begin(9600);
-  // Serial.begin(9600);
+  // Set power pin
+  pinMode(_PIN_PWR, OUTPUT);
+  setWakeup(LOW);
 
   // Begin PCA9685 Drivers
   for (uint8_t i = 0; i < _PCA_NUM; i++)
@@ -94,12 +170,21 @@ void setup()
     delay(100);
   }
 
-  // // Activate motors
-  // for (uint8_t i = 0; i < 1; i++)
-  // {
-  //   g_mtr[i].wakeup();
-  //   delay(100);
-  // }
+  // Activate motors
+  for (uint8_t i = 0; i < 1; i++)
+  {
+    g_mtr[i].begin();
+    delay(100);
+  }
+}
+
+void setup() 
+{
+  // Serial interface
+  g_cmd_interface.begin(9600);
+
+  // Devices
+  // setupDevices();
 
   // g_rly[0].switchTo(true);
 }
@@ -110,13 +195,14 @@ void loop()
 
   if (res)
   {
+    Serial.print("Cmd_type: ");Serial.println(g_cmd.cmd_type);
     Serial.print("Dev: ");Serial.println(g_cmd.dev);
     Serial.print("Dev_num: ");Serial.println(g_cmd.dev_num);
-    Serial.print("Cmd_type: ");Serial.println(g_cmd.cmd_type);
     Serial.print("Val[0]: ");Serial.println(g_cmd.val[0]);
     Serial.print("Val[1]: ");Serial.println(g_cmd.val[1]);
     Serial.print("\n\n");
   }
 
-  stateMachine(g_cmd);
+  // if (g_cmd_interface.receiveCommand(g_cmd))
+  //   commandDevice(g_cmd);
 }
