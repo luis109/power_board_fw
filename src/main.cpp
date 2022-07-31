@@ -33,10 +33,10 @@ MotorDriver g_mtr[_MTR_NUM] = {MotorDriver(&g_pca[0], _PIN_ENABLE_MTR1, _PIN_IN1
 
 //Command interface
 CommandProtocol g_cmd_interface;
-Command g_cmd;
+CommandProtocol::Command g_cmd;
 
 bool
-stateMachine(Command& cmd)
+stateMachine(CommandProtocol::Command& cmd)
 {
   switch (cmd.dev)
   {
