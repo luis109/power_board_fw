@@ -9,8 +9,7 @@ class MotorDriver
   public:
     MotorDriver(Adafruit_PWMServoDriver* driver, uint8_t enable_pin, uint8_t phase_pin, uint8_t sleep_pin);
     void begin();
-    void wakeup();
-    void sleep();
+    void brake();
     void turnOn();
     void turnOff();
     void setSpeed(uint16_t speed);
@@ -22,8 +21,8 @@ class MotorDriver
   private:
     Adafruit_PWMServoDriver* m_driver;
     uint8_t m_enable_pin;
-    uint8_t m_phase_pin;
-    uint8_t m_sleep_pin;
+    uint8_t m_in1_pin;
+    uint8_t m_in2_pin;
 };
 
 #endif
