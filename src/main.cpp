@@ -46,105 +46,95 @@ setWakeup(bool state)
 }
 
 bool
-commandDevice(CommandProtocol::Command& cmd)
+getInfo(CommandProtocol::Command& cmd)
 {
+  if (cmd.cmd_type != CMD_TYPE_GET)
+    return false;
+  
   switch (cmd.dev)
   {
     case CMD_DEV_MOTOR:
       if (cmd.dev_num > _MTR_NUM)
         return false;
-      else
-        g_cmd_interface.sendOk();
 
-      if (cmd.cmd_type == CMD_TYPE_GET)
-      {
-        cmd.cmd_type = CMD_TYPE_INFO;
-        cmd.val[0] = (uint16_t)g_mtr[cmd.dev_num].getDirection();
-        cmd.val[1] = (uint16_t)g_mtr[cmd.dev_num].getSpeed();
-        g_cmd_interface.sendCommand(cmd);
-      }
-      else if (cmd.cmd_type == CMD_TYPE_SET)
-      {
-        g_mtr[cmd.dev_num].setDirection((bool)cmd.val[0]);
-        g_mtr[cmd.dev_num].setSpeed(cmd.val[1]);
-      }
-      else
-      {
-        g_cmd_interface.sendError("Unsuported message type.");
-        return false;
-      }
-      break;
+      cmd.cmd_type = CMD_TYPE_INFO;
+      cmd.val[0] = (uint16_t)g_mtr[cmd.dev_num].getDirection();
+      cmd.val[1] = (uint16_t)g_mtr[cmd.dev_num].getSpeed();
+      g_cmd_interface.sendCommand(cmd);
+      return true;
     
     case CMD_DEV_PWM:
       if (cmd.dev_num > _PWM_NUM)
         return false;
-      else
-        g_cmd_interface.sendOk();
 
-      if (cmd.cmd_type == CMD_TYPE_GET)
-      {
-        cmd.cmd_type = CMD_TYPE_INFO;
-        cmd.val[0] = (uint16_t)g_pwm[cmd.dev_num].state();
-        g_cmd_interface.sendCommand(cmd);
-      }
-      else if (cmd.cmd_type == CMD_TYPE_SET)
-      {
-        g_pwm[cmd.dev_num].setOutput(cmd.val[0]);
-      }
-      else
-      {
-        g_cmd_interface.sendError("Unsuported message type.");
-        return false;
-      }
-      break;
+      cmd.cmd_type = CMD_TYPE_INFO;
+      cmd.val[0] = (uint16_t)g_pwm[cmd.dev_num].state();
+      g_cmd_interface.sendCommand(cmd);
+      return true;
     
     case CMD_DEV_RELAY:
       if (cmd.dev_num > _RELAY_NUM)
         return false;
-      else
-        g_cmd_interface.sendOk();
 
-      if (cmd.cmd_type == CMD_TYPE_GET)
-      {
-        cmd.cmd_type = CMD_TYPE_INFO;
-        cmd.val[0] = (uint16_t)g_rly[cmd.dev_num].state();
-        g_cmd_interface.sendCommand(cmd);
-      }
-      else if (cmd.cmd_type == CMD_TYPE_SET)
-      {
-        g_rly[cmd.dev_num].switchTo(cmd.val[0]);
-      }
-      else
-      {
-        g_cmd_interface.sendError("Unsuported message type.");
-        return false;
-      }
-      break;
+      cmd.cmd_type = CMD_TYPE_INFO;
+      cmd.val[0] = (uint16_t)g_rly[cmd.dev_num].state();
+      g_cmd_interface.sendCommand(cmd);
+      return true;
     
     case CMD_DEV_WAKEUP:
-      g_cmd_interface.sendOk();
-
-      if (cmd.cmd_type == CMD_TYPE_GET)
-      {
-        cmd.cmd_type = CMD_TYPE_INFO;
-        cmd.val[0] = (uint16_t)g_wkup_state;
-        g_cmd_interface.sendCommand(cmd);
-      }
-      else if (cmd.cmd_type == CMD_TYPE_SET)
-      {
-        setWakeup((bool)cmd.val[0]);
-      }
-      else
-      {
-        g_cmd_interface.sendError("Unsuported message type.");
-        return false;
-      }
-      break;
+      cmd.cmd_type = CMD_TYPE_INFO;
+      cmd.val[0] = (uint16_t)g_wkup_state;
+      g_cmd_interface.sendCommand(cmd);
+      return true;
 
     default:
       g_cmd_interface.sendError("Unsuported device.");
       return false;
   }
+}
+
+bool
+commandDevice(CommandProtocol::Command& cmd)
+{
+  if (cmd.cmd_type != CMD_TYPE_SET)
+    return false;
+
+  switch (cmd.dev)
+  {
+    case CMD_DEV_MOTOR:
+      if (cmd.dev_num > _MTR_NUM)
+        return false;
+        
+      g_mtr[cmd.dev_num].setDirection((bool)cmd.val[0]);
+      g_mtr[cmd.dev_num].setSpeed(cmd.val[1]);
+      return true;
+    
+    case CMD_DEV_PWM:
+      if (cmd.dev_num > _PWM_NUM)
+        return false;
+
+      g_pwm[cmd.dev_num].setOutput(cmd.val[0]);
+      return true;
+    
+    case CMD_DEV_RELAY:
+      if (cmd.dev_num > _RELAY_NUM)
+        return false;
+
+      g_rly[cmd.dev_num].switchTo(cmd.val[0]);
+      return true;
+    
+    case CMD_DEV_WAKEUP:
+      g_cmd_interface.sendOk();
+
+      setWakeup((bool)cmd.val[0]);
+      return true;
+
+    default:
+      g_cmd_interface.sendError("Unsuported device.");
+      return false;
+  }
+
+  return false;
 }
 
 void
@@ -184,25 +174,35 @@ void setup()
   g_cmd_interface.begin(9600);
 
   // Devices
-  // setupDevices();
+  setupDevices();
 
-  // g_rly[0].switchTo(true);
+  setWakeup(true);
+  g_mtr[0].setDirection(true);
+  g_mtr[0].setSpeed(4000);
+  g_mtr[0].turnOn();
 }
 
 void loop() 
 {
-  bool res = g_cmd_interface.receiveCommand(g_cmd);
+  // bool res = g_cmd_interface.receiveCommand(g_cmd);
 
-  if (res)
+  // if (res)
+  // {
+  //   Serial.print("Cmd_type: ");Serial.println(g_cmd.cmd_type);
+  //   Serial.print("Dev: ");Serial.println(g_cmd.dev);
+  //   Serial.print("Dev_num: ");Serial.println(g_cmd.dev_num);
+  //   Serial.print("Val[0]: ");Serial.println(g_cmd.val[0]);
+  //   Serial.print("Val[1]: ");Serial.println(g_cmd.val[1]);
+  //   Serial.print("\n\n");
+  // }
+
+  if (g_cmd_interface.receiveCommand(g_cmd))
   {
-    Serial.print("Cmd_type: ");Serial.println(g_cmd.cmd_type);
-    Serial.print("Dev: ");Serial.println(g_cmd.dev);
-    Serial.print("Dev_num: ");Serial.println(g_cmd.dev_num);
-    Serial.print("Val[0]: ");Serial.println(g_cmd.val[0]);
-    Serial.print("Val[1]: ");Serial.println(g_cmd.val[1]);
-    Serial.print("\n\n");
+    if (commandDevice(g_cmd))
+      g_cmd_interface.sendOk();
+    else if (getInfo(g_cmd))
+      g_cmd_interface.sendOk();
+    else
+      g_cmd_interface.sendError("Unsuported message type.");
   }
-
-  // if (g_cmd_interface.receiveCommand(g_cmd))
-  //   commandDevice(g_cmd);
 }
