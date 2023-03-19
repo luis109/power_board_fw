@@ -21,14 +21,14 @@ void
 MotorDriver::turnOn()
 {
 	// Set fully on
-	m_driver->setPWM(m_enable_pin, 0, 4096);
+	m_driver->setPWM(m_enable_pin, 4096, 0);
 }
 
 void
 MotorDriver::turnOff()
 {
-	// Set fully on
-	m_driver->setPWM(m_enable_pin, 4096, 0);
+	// Set fully off
+	m_driver->setPWM(m_enable_pin, 0, 4096);
 }
 
 void
