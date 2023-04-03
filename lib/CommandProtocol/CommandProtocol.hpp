@@ -19,39 +19,38 @@ enum
   CMD_TYPE_GET = 'G',
   CMD_TYPE_INFO = 'I'
 };
+struct Command
+{
+  char m_type;
+  char m_dev;
+  uint16_t m_dev_num;
+  uint16_t m_val[2];
+
+  Command()
+  {
+    reset();
+  }
+
+  void
+  reset()
+  {
+    m_type = '\0';
+    m_dev = '\0';
+    m_dev_num = -1;
+    m_val[0] = -1;
+    m_val[1] = -1;
+  }
+};
 
 class CommandProtocol
 {
   public:
-    struct
-    Command
-    {
-      char cmd_type;
-      char dev;
-      uint16_t dev_num;
-      uint16_t val[2];
-
-      Command()
-      {
-        reset();
-      }
-
-      void
-      reset()
-      {
-        cmd_type = '\0';
-        dev = '\0';
-        dev_num = -1;
-        val[0] = -1;
-        val[1] = -1;
-      }
-    };
     
     void begin(int baud);
 
     bool receiveCommand(Command& cmd);
     bool sendCommand(Command& cmd);
-    bool sendError(char* error_msg);
+    bool sendError(const char* error_msg);
     bool sendOk();
     bool sendHeartbeat();
 

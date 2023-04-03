@@ -64,24 +64,24 @@ CommandProtocol::decode(Command& cmd, char* str)
   cmd.reset();
 
   uint8_t filled_args;
-  filled_args = sscanf(str, "%c,%c,%u,%u,%u", &cmd.cmd_type,
-                                              &cmd.dev,
-                                              &cmd.dev_num,
-                                              &cmd.val[0],
-                                              &cmd.val[1]);
+  filled_args = sscanf(str, "%c,%c,%u,%u,%u", &cmd.m_type,
+                                              &cmd.m_dev,
+                                              &cmd.m_dev_num,
+                                              &cmd.m_val[0],
+                                              &cmd.m_val[1]);
   
   // Sanity checks
   if (filled_args < 3)
     return false;
   
-  if (cmd.cmd_type == CMD_TYPE_GET)
+  if (cmd.m_type == CMD_TYPE_GET)
   {
     if (filled_args != 3)
       return false;
   }
   else
   {
-    if (cmd.dev == CMD_DEV_MOTOR)
+    if (cmd.m_dev == CMD_DEV_MOTOR)
     {
       if (filled_args != 5)
         return false;
@@ -99,17 +99,19 @@ bool
 CommandProtocol::encode(Command& cmd, char* str)
 {
   uint8_t lenght;
-  lenght = sprintf(str, "%c,%c,%u", cmd.cmd_type,
-                                    cmd.dev,
-                                    cmd.dev_num);
+  lenght = sprintf(str, "%c,%c", cmd.m_type,
+                                 cmd.m_dev);
 
   if (lenght < 0)                          
     return false;
 
+  if (cmd.m_dev_num != 65535) // Invalid (uint16_t)(-1)
+      lenght += sprintf(&str[lenght], ",%u", cmd.m_dev_num);
+
   for (uint8_t i = 0; i < 2; i++)
   {
-    if (cmd.val[i] != 65535) // Invalid (uint16_t)(-1)
-      lenght += sprintf(&str[lenght], ",%u", cmd.val[i]);
+    if (cmd.m_val[i] != 65535) // Invalid (uint16_t)(-1)
+      lenght += sprintf(&str[lenght], ",%u", cmd.m_val[i]);
   }
 
   return true;
@@ -132,7 +134,7 @@ bool
 CommandProtocol::sendCommand(Command& cmd)
 {
   //Should only send CMD_TYPE_INFO
-  if (cmd.cmd_type != CMD_TYPE_INFO)
+  if (cmd.m_type != CMD_TYPE_INFO)
     return false;
   
   char str[CP_BUFFER_SIZE];
@@ -150,7 +152,7 @@ CommandProtocol::sendOk()
 }
 
 bool
-CommandProtocol::sendError(char* error_msg)
+CommandProtocol::sendError(const char* error_msg)
 {
   char msg[CP_BUFFER_SIZE];
   sprintf(msg, "ERROR,%s", error_msg);

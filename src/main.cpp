@@ -33,7 +33,7 @@ MotorDriver g_mtr[_MTR_NUM] = {MotorDriver(&g_pca[0], _PIN_ENABLE_MTR1, _PIN_IN1
 
 //Command interface
 CommandProtocol g_cmd_interface;
-CommandProtocol::Command g_cmd;
+Command g_cmd;
 
 // Wakeup Pin
 bool g_wkup_state;
@@ -46,44 +46,44 @@ setWakeup(bool state)
 }
 
 bool
-getInfo(CommandProtocol::Command& cmd)
+getInfo(Command& cmd)
 {
-  if (cmd.cmd_type != CMD_TYPE_GET)
+  if (cmd.m_type != CMD_TYPE_GET)
     return false;
   
-  switch (cmd.dev)
+  switch (cmd.m_dev)
   {
     case CMD_DEV_MOTOR:
-      if (cmd.dev_num > _MTR_NUM)
+      if (cmd.m_dev_num > _MTR_NUM)
         return false;
 
-      cmd.cmd_type = CMD_TYPE_INFO;
-      cmd.val[0] = (uint16_t)g_mtr[cmd.dev_num].getDirection();
-      cmd.val[1] = (uint16_t)g_mtr[cmd.dev_num].getSpeed();
+      cmd.m_type = CMD_TYPE_INFO;
+      cmd.m_val[0] = (uint16_t)g_mtr[cmd.m_dev_num].getDirection();
+      cmd.m_val[1] = (uint16_t)g_mtr[cmd.m_dev_num].getSpeed();
       g_cmd_interface.sendCommand(cmd);
       return true;
     
     case CMD_DEV_PWM:
-      if (cmd.dev_num > _PWM_NUM)
+      if (cmd.m_dev_num > _PWM_NUM)
         return false;
 
-      cmd.cmd_type = CMD_TYPE_INFO;
-      cmd.val[0] = (uint16_t)g_pwm[cmd.dev_num].state();
+      cmd.m_type = CMD_TYPE_INFO;
+      cmd.m_val[0] = (uint16_t)g_pwm[cmd.m_dev_num].state();
       g_cmd_interface.sendCommand(cmd);
       return true;
     
     case CMD_DEV_RELAY:
-      if (cmd.dev_num > _RELAY_NUM)
+      if (cmd.m_dev_num > _RELAY_NUM)
         return false;
 
-      cmd.cmd_type = CMD_TYPE_INFO;
-      cmd.val[0] = (uint16_t)g_rly[cmd.dev_num].state();
+      cmd.m_type = CMD_TYPE_INFO;
+      cmd.m_val[0] = (uint16_t)g_rly[cmd.m_dev_num].state();
       g_cmd_interface.sendCommand(cmd);
       return true;
     
     case CMD_DEV_WAKEUP:
-      cmd.cmd_type = CMD_TYPE_INFO;
-      cmd.val[0] = (uint16_t)g_wkup_state;
+      cmd.m_type = CMD_TYPE_INFO;
+      cmd.m_val[0] = (uint16_t)g_wkup_state;
       g_cmd_interface.sendCommand(cmd);
       return true;
 
@@ -94,39 +94,39 @@ getInfo(CommandProtocol::Command& cmd)
 }
 
 bool
-commandDevice(CommandProtocol::Command& cmd)
+commandDevice(Command& cmd)
 {
-  if (cmd.cmd_type != CMD_TYPE_SET)
+  if (cmd.m_type != CMD_TYPE_SET)
     return false;
 
-  switch (cmd.dev)
+  switch (cmd.m_dev)
   {
     case CMD_DEV_MOTOR:
-      if (cmd.dev_num > _MTR_NUM)
+      if (cmd.m_dev_num > _MTR_NUM)
         return false;
         
-      g_mtr[cmd.dev_num].setDirection((bool)cmd.val[0]);
-      g_mtr[cmd.dev_num].setSpeed(cmd.val[1]);
+      g_mtr[cmd.m_dev_num].setDirection((bool)cmd.m_val[0]);
+      g_mtr[cmd.m_dev_num].setSpeed(cmd.m_val[1]);
       return true;
     
     case CMD_DEV_PWM:
-      if (cmd.dev_num > _PWM_NUM)
+      if (cmd.m_dev_num > _PWM_NUM)
         return false;
 
-      g_pwm[cmd.dev_num].setOutput(cmd.val[0]);
+      g_pwm[cmd.m_dev_num].setOutput(cmd.m_val[0]);
       return true;
     
     case CMD_DEV_RELAY:
-      if (cmd.dev_num > _RELAY_NUM)
+      if (cmd.m_dev_num > _RELAY_NUM)
         return false;
 
-      g_rly[cmd.dev_num].switchTo(cmd.val[0]);
+      g_rly[cmd.m_dev_num].switchTo(cmd.m_val[0]);
       return true;
     
     case CMD_DEV_WAKEUP:
       g_cmd_interface.sendOk();
 
-      setWakeup((bool)cmd.val[0]);
+      setWakeup((bool)cmd.m_val[0]);
       return true;
 
     default:
@@ -177,9 +177,9 @@ void setup()
   setupDevices();
 
   setWakeup(true);
-  g_mtr[0].setDirection(true);
-  g_mtr[0].setSpeed(4000);
-  g_mtr[0].turnOn();
+  g_mtr[0].setDirection(false);
+  g_mtr[0].setSpeed(4096);
+  // g_mtr[0].turnOn();
 }
 
 void loop() 
