@@ -46,6 +46,21 @@ setWakeup(bool state)
 }
 
 bool
+getVersion(Command& cmd)
+{
+  if (cmd.m_type != CMD_TYPE_VERSION)
+    return false;
+
+  cmd.m_dev = CMD_DEV_VERSION;
+  cmd.m_dev_num = 0;
+  cmd.m_val[0] = _DEV_VERSION;
+  
+  g_cmd_interface.sendCommand(cmd);
+
+  return true;
+}
+
+bool
 getInfo(Command& cmd)
 {
   if (cmd.m_type != CMD_TYPE_GET)
@@ -179,7 +194,6 @@ void setup()
   setWakeup(true);
   g_mtr[0].setDirection(false);
   g_mtr[0].setSpeed(4096);
-  // g_mtr[0].turnOn();
 }
 
 void loop() 
@@ -201,6 +215,8 @@ void loop()
     if (commandDevice(g_cmd))
       g_cmd_interface.sendOk();
     else if (getInfo(g_cmd))
+      g_cmd_interface.sendOk();
+    else if (getVersion(g_cmd))
       g_cmd_interface.sendOk();
     else
       g_cmd_interface.sendError("Unsuported message type.");
