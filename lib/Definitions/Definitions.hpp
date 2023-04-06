@@ -1,6 +1,8 @@
 #ifndef Definitions_hpp
 #define Definitions_hpp
 
+#define _DEV_VERSION 1
+
 #define _ADDR_PCA9685_0 0x60
 #define _ADDR_PCA9685_1 0x61
 #define _PCA_NUM 2

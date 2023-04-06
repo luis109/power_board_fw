@@ -2,6 +2,7 @@
 #define CommandProtocol_hpp
 
 #include <SerialUtils.hpp>
+#include <NMEASentence.hpp>
 
 #define CP_BUFFER_SIZE 128
 
@@ -10,14 +11,16 @@ enum
   CMD_DEV_MOTOR = 'M',
   CMD_DEV_PWM = 'P',
   CMD_DEV_RELAY = 'R',
-  CMD_DEV_WAKEUP = 'W'
+  CMD_DEV_WAKEUP = 'W',
+  CMD_DEV_VERSION = 'V'
 };
 
 enum
 {
   CMD_TYPE_SET = 'S',
   CMD_TYPE_GET = 'G',
-  CMD_TYPE_INFO = 'I'
+  CMD_TYPE_INFO = 'I',
+  CMD_TYPE_VERSION = 'V'
 };
 struct Command
 {
@@ -46,19 +49,27 @@ class CommandProtocol
 {
   public:
     
-    void begin(int baud);
+    void 
+    begin(int baud);
 
-    bool receiveCommand(Command& cmd);
-    bool sendCommand(Command& cmd);
-    bool sendError(const char* error_msg);
-    bool sendOk();
-    bool sendHeartbeat();
+    bool 
+    receiveCommand(Command& cmd);
+
+    bool 
+    sendCommand(Command& cmd);
+
+    bool 
+    sendError(const char* error_msg);
+
+    bool 
+    sendOk();
 
   private:
-    bool sendString(char* msg);
-    bool receiveString(char* msg);
-    bool decode(Command& cmd, char* str);
-    bool encode(Command& cmd, char* str);
+    bool 
+    decode(Command& cmd, NMEASentence& sentence);
+
+    void 
+    encode(Command& cmd, NMEASentence& sentence);
 };
 
 #endif
