@@ -55,20 +55,15 @@ void MotorDriver::switchDirection()
 
 void MotorDriver::setSpeed(uint16_t speed)
 {
-  // Checks
-  if (speed >= 4095)
+  // Speed comes as percentage from 0 to 100
+  if (speed >= 100)
   {
     m_driver->setPWM(m_enable_pin, 4096, 0);
     return;
   }
-  else if (speed < 0)
-  {
-    m_driver->setPWM(m_enable_pin, 0, 4096);
-    return;
-  }
 
-  // Set state
-  m_driver->setPWM(m_enable_pin, 0, speed);
+  // Perform conversion to motor scale (0 to 4095)
+  m_driver->setPWM(m_enable_pin, 0, map(speed, 0, 100, 0, 4095));
 }
 
 // Test the values this returns
