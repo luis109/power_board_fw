@@ -190,26 +190,10 @@ void setup()
 
   // Devices
   setupDevices();
-
-  setWakeup(true);
-  g_mtr[0].setDirection(false);
-  g_mtr[0].setSpeed(4096);
 }
 
 void loop() 
 {
-  // bool res = g_cmd_interface.receiveCommand(g_cmd);
-
-  // if (res)
-  // {
-  //   Serial.print("Cmd_type: ");Serial.println(g_cmd.cmd_type);
-  //   Serial.print("Dev: ");Serial.println(g_cmd.dev);
-  //   Serial.print("Dev_num: ");Serial.println(g_cmd.dev_num);
-  //   Serial.print("Val[0]: ");Serial.println(g_cmd.val[0]);
-  //   Serial.print("Val[1]: ");Serial.println(g_cmd.val[1]);
-  //   Serial.print("\n\n");
-  // }
-
   if (g_cmd_interface.receiveCommand(g_cmd))
   {
     if (commandDevice(g_cmd))
