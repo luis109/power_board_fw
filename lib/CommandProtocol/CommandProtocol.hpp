@@ -49,16 +49,27 @@ class CommandProtocol
 {
   public:
     
-    void begin(int baud);
+    void 
+    begin(int baud);
 
-    bool receiveCommand(Command& cmd);
-    bool sendCommand(Command& cmd);
-    bool sendError(const char* error_msg);
-    bool sendOk();
+    bool 
+    receiveCommand(Command& cmd);
+
+    bool 
+    sendCommand(Command& cmd);
+
+    bool 
+    sendError(const char* error_msg);
+
+    bool 
+    sendOk();
 
   private:
-    bool decode(Command& cmd, NMEASentence& sentence);
-    void encode(Command& cmd, NMEASentence& sentence);
+    bool 
+    decode(Command& cmd, NMEASentence& sentence);
+
+    void 
+    encode(Command& cmd, NMEASentence& sentence);
 };
 
 #endif
