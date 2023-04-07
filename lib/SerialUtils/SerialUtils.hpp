@@ -28,7 +28,7 @@ class SerialUtils
 
     // Return number of characters read to buffer
     static uint8_t 
-    receiveMessage(char* bfr, uint8_t bfr_length)
+    receiveMessage(char* bfr, uint16_t bfr_length)
     {
       if (Serial.available() > 0) 
       {
