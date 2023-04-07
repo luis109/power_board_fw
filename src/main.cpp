@@ -46,66 +46,52 @@ setWakeup(bool state)
 }
 
 bool
-getVersion(Command& cmd)
-{
-  if (cmd.m_type != CMD_TYPE_VERSION)
-    return false;
-
-  cmd.m_dev = CMD_DEV_VERSION;
-  cmd.m_dev_num = 0;
-  cmd.m_val[0] = _DEV_VERSION;
-  
-  g_cmd_interface.sendCommand(cmd);
-
-  return true;
-}
-
-bool
 getInfo(Command& cmd)
 {
   if (cmd.m_type != CMD_TYPE_GET)
     return false;
   
+  cmd.m_type = CMD_TYPE_INFO;
   switch (cmd.m_dev)
   {
     case CMD_DEV_MOTOR:
       if (cmd.m_dev_num > _MTR_NUM)
         return false;
 
-      cmd.m_type = CMD_TYPE_INFO;
       cmd.m_val[0] = (uint16_t)g_mtr[cmd.m_dev_num].getDirection();
       cmd.m_val[1] = (uint16_t)g_mtr[cmd.m_dev_num].getSpeed();
-      g_cmd_interface.sendCommand(cmd);
-      return true;
+      break;
     
     case CMD_DEV_PWM:
       if (cmd.m_dev_num > _PWM_NUM)
         return false;
 
-      cmd.m_type = CMD_TYPE_INFO;
       cmd.m_val[0] = (uint16_t)g_pwm[cmd.m_dev_num].state();
-      g_cmd_interface.sendCommand(cmd);
-      return true;
+      break;
     
     case CMD_DEV_RELAY:
       if (cmd.m_dev_num > _RELAY_NUM)
         return false;
 
-      cmd.m_type = CMD_TYPE_INFO;
       cmd.m_val[0] = (uint16_t)g_rly[cmd.m_dev_num].state();
-      g_cmd_interface.sendCommand(cmd);
-      return true;
+      break;
     
     case CMD_DEV_WAKEUP:
-      cmd.m_type = CMD_TYPE_INFO;
       cmd.m_val[0] = (uint16_t)g_wkup_state;
-      g_cmd_interface.sendCommand(cmd);
-      return true;
+      break;
+    
+    case CMD_DEV_VERSION:
+      cmd.m_dev_num = 0;
+      cmd.m_val[0] = _DEV_VERSION;
+      break;
 
     default:
       g_cmd_interface.sendError("Unsuported device.");
       return false;
   }
+
+  g_cmd_interface.sendCommand(cmd);
+  return true;
 }
 
 bool
@@ -139,8 +125,6 @@ commandDevice(Command& cmd)
       return true;
     
     case CMD_DEV_WAKEUP:
-      g_cmd_interface.sendAck();
-
       setWakeup((bool)cmd.m_val[0]);
       return true;
 
@@ -150,6 +134,16 @@ commandDevice(Command& cmd)
   }
 
   return false;
+}
+
+void
+parseCommand(Command& cmd)
+{
+  if (commandDevice(cmd))
+    g_cmd_interface.sendAck();
+  else if (!getInfo(cmd))
+    g_cmd_interface.sendError("Unsuported message type.");
+
 }
 
 void
@@ -195,14 +189,5 @@ void setup()
 void loop() 
 {
   if (g_cmd_interface.receiveCommand(g_cmd))
-  {
-    if (commandDevice(g_cmd))
-      g_cmd_interface.sendAck();
-    else if (getInfo(g_cmd))
-      g_cmd_interface.sendAck();
-    else if (getVersion(g_cmd))
-      g_cmd_interface.sendAck();
-    else
-      g_cmd_interface.sendError("Unsuported message type.");
-  }
+    parseCommand(g_cmd);
 }

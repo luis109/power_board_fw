@@ -17,8 +17,7 @@ enum
 {
   CMD_TYPE_SET = 'S',
   CMD_TYPE_GET = 'G',
-  CMD_TYPE_INFO = 'I',
-  CMD_TYPE_VERSION = 'V'
+  CMD_TYPE_INFO = 'I'
 };
 struct Command
 {
