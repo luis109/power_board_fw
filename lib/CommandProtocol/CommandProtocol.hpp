@@ -4,8 +4,6 @@
 #include <SerialUtils.hpp>
 #include <NMEASentence.hpp>
 
-#define CP_BUFFER_SIZE 128
-
 enum
 {
   CMD_DEV_MOTOR = 'M',
@@ -62,9 +60,11 @@ class CommandProtocol
     sendError(const char* error_msg);
 
     bool 
-    sendOk();
+    sendAck();
 
   private:
+    //! Receive buffer
+    char m_bfr[NMEA_MAX_LENGTH()];
     bool 
     decode(Command& cmd, NMEASentence& sentence);
 

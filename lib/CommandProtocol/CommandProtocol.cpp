@@ -1,16 +1,6 @@
 #include <CommandProtocol.hpp>
 
-uint8_t xor_check(char *data)
-{
-  uint8_t csum = 0x00;
-  uint8_t t = 0;
-  while (data[t] != '\0')
-  {
-    csum ^= data[t];
-    t++;
-  }
-  return csum;
-}
+// #define _COMMAND_PROTOCOL_DEBUG
 
 void
 CommandProtocol::begin(int baud)
@@ -53,12 +43,12 @@ CommandProtocol::encode(Command& cmd, NMEASentence& sentence)
   sentence.addField(cmd.m_type);
   sentence.addField(cmd.m_dev);
 
-  if (cmd.m_dev_num != 65535) // Invalid (uint16_t)(-1)
+  if (cmd.m_dev_num != (uint16_t)(-1)) // Invalid (uint16_t)(-1)
     sentence.addField(cmd.m_dev_num);
 
   for (uint8_t i = 0; i < 2; i++)
   {
-    if (cmd.m_val[i] != 65535) // Invalid (uint16_t)(-1)
+    if (cmd.m_val[i] != (uint16_t)(-1)) // Invalid (uint16_t)(-1)
       sentence.addField(cmd.m_val[i]);
   }
 }
@@ -66,21 +56,22 @@ CommandProtocol::encode(Command& cmd, NMEASentence& sentence)
 bool 
 CommandProtocol::receiveCommand(Command& cmd)
 {
-  char bfr[CP_BUFFER_SIZE];
-  uint8_t length = SerialUtils::receiveMessage(bfr, CP_BUFFER_SIZE);
+  uint8_t length = SerialUtils::receiveMessage(m_bfr, NMEA_MAX_LENGTH());
 
   if (length == 0)
     return false;
 
-  NMEASentence sentence(bfr);
+  NMEASentence sentence(m_bfr);
   if (!decode(cmd, sentence))
     return false;
 
-  // Serial.print("Type: ");Serial.println(cmd.m_type);
-  // Serial.print("Dev: ");Serial.println(cmd.m_dev);
-  // Serial.print("Dev Num: ");Serial.println(cmd.m_dev_num);
-  // Serial.print("Val 0: ");Serial.println(cmd.m_val[0]);
-  // Serial.print("Val 1: ");Serial.println(cmd.m_val[1]);
+#ifdef _COMMAND_PROTOCOL_DEBUG
+  Serial.print("Type: ");Serial.println(cmd.m_type);
+  Serial.print("Dev: ");Serial.println(cmd.m_dev);
+  Serial.print("Dev Num: ");Serial.println(cmd.m_dev_num);
+  Serial.print("Val 0: ");Serial.println(cmd.m_val[0]);
+  Serial.print("Val 1: ");Serial.println(cmd.m_val[1]);
+#endif
 
   return true;
 }
@@ -88,39 +79,32 @@ CommandProtocol::receiveCommand(Command& cmd)
 bool 
 CommandProtocol::sendCommand(Command& cmd)
 {
-  //Should only send CMD_TYPE_INFO
-  if (cmd.m_type != CMD_TYPE_INFO && cmd.m_type != CMD_TYPE_VERSION)
-    return false;
-  
   NMEASentence sentence;
   encode(cmd, sentence);
 
-  char bfr[CP_BUFFER_SIZE];
-  sentence.getSentence(bfr);
-  return SerialUtils::sendMessage(bfr) > 0;
+  sentence.getSentence(m_bfr);
+  return SerialUtils::sendMessage(m_bfr) > 0;
 }
 
 bool
-CommandProtocol::sendOk()
+CommandProtocol::sendAck()
 {
   NMEASentence sentence;
-  char bfr[CP_BUFFER_SIZE];
 
-  sentence.addField("OK");
-  sentence.getSentence(bfr);
+  sentence.addField("ACK");
+  sentence.getSentence(m_bfr);
 
-  return SerialUtils::sendMessage(bfr) > 0;
+  return SerialUtils::sendMessage(m_bfr) > 0;
 }
 
 bool
 CommandProtocol::sendError(const char* error_msg)
 {
   NMEASentence sentence;
-  char bfr[CP_BUFFER_SIZE];
   
-  sprintf(bfr, "ERROR,%s", error_msg);
-  sentence.addField(bfr);
-  sentence.getSentence(bfr);
+  sprintf(m_bfr, "ERROR,%s", error_msg);
+  sentence.addField(m_bfr);
+  sentence.getSentence(m_bfr);
 
-  return SerialUtils::sendMessage(bfr) > 0;
+  return SerialUtils::sendMessage(m_bfr) > 0;
 }

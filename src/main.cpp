@@ -139,7 +139,7 @@ commandDevice(Command& cmd)
       return true;
     
     case CMD_DEV_WAKEUP:
-      g_cmd_interface.sendOk();
+      g_cmd_interface.sendAck();
 
       setWakeup((bool)cmd.m_val[0]);
       return true;
@@ -197,11 +197,11 @@ void loop()
   if (g_cmd_interface.receiveCommand(g_cmd))
   {
     if (commandDevice(g_cmd))
-      g_cmd_interface.sendOk();
+      g_cmd_interface.sendAck();
     else if (getInfo(g_cmd))
-      g_cmd_interface.sendOk();
+      g_cmd_interface.sendAck();
     else if (getVersion(g_cmd))
-      g_cmd_interface.sendOk();
+      g_cmd_interface.sendAck();
     else
       g_cmd_interface.sendError("Unsuported message type.");
   }
