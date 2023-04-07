@@ -1,7 +1,9 @@
 #include <NMEASentence.hpp>
 
+// #define _NMEA_SENTENCE_DEBUG
+
 uint8_t 
-_xor_check(char *data)
+xor_check(char *data)
 {
   uint8_t csum = 0x00;
   uint8_t t = 0;
@@ -26,9 +28,6 @@ NMEASentence::NMEASentence(const char* sentence):
 
   strcpy(m_sentence, sentence);
   makeFields();
-
-  // Debug
-  // makeSentence();
 }
 
 NMEASentence::NMEASentence(const NMEAFields fields):
@@ -37,9 +36,6 @@ NMEASentence::NMEASentence(const NMEAFields fields):
   for (uint8_t i = 0; i < NMEA_MAX_FIELDS; i++)
     strcpy(m_fields[i], fields[i]);
   makeSentence();
-
-  // Debug
-  // makeFields();
 }
 
 void
@@ -66,7 +62,7 @@ NMEASentence::checkSentence(const char* sentence)
   char str[NMEA_MAX_LENGTH()];
   sscanf(&sentence[1], "%[^*]*%x%*s", str, &csum);
 
-  if (csum != (uint16_t)_xor_check(str))
+  if (csum != (uint16_t)xor_check(str))
     return false;
 
   return true;
@@ -76,7 +72,7 @@ void
 NMEASentence::makeFields()
 {
   char str[NMEA_MAX_LENGTH()];
-  const char s = ',';
+  const char sep = ',';
   char *token;
 
   // Strip '$' and checksum
@@ -86,22 +82,24 @@ NMEASentence::makeFields()
   m_field_index = 0;
 
   // Seperate fields
-  token = strtok(str, &s);
+  token = strtok(str, &sep);
   while( token != NULL ) 
   {
     strcpy(m_fields[m_field_index], token);
     m_field_index++;
-    token = strtok(NULL, &s);
+    token = strtok(NULL, &sep);
 
     if (*token == '\0')
       break;
   }
 
-  // for (uint8_t i = 0; i < m_field_index; i++)
-  // {
-  //   Serial.print("Field ");Serial.print(i);Serial.print(": ");
-  //   Serial.println(m_fields[i]);
-  // }
+#ifdef _NMEA_SENTENCE_DEBUG
+  for (uint8_t i = 0; i < m_field_index; i++)
+  {
+    Serial.print("Field ");Serial.print(i);Serial.print(": ");
+    Serial.println(m_fields[i]);
+  }
+#endif
 }
 
 void
@@ -115,9 +113,11 @@ NMEASentence::makeSentence()
   for (uint8_t i = 1; i < m_field_index; i++)
     lenght += sprintf(&str[lenght], ",%s", m_fields[i]);
 
-  sprintf(m_sentence, "$%s*%02x\n\0", str, _xor_check(str));
+  sprintf(m_sentence, "$%s*%02x\n", str, xor_check(str));
 
-  // Serial.print("Sentence: ");Serial.println(m_sentence);
+#ifdef _NMEA_SENTENCE_DEBUG
+  Serial.print("Sentence: ");Serial.println(m_sentence);
+#endif
 }
 
 bool
@@ -134,7 +134,7 @@ NMEASentence::setSentence(const char* sentence)
 void
 NMEASentence::addField(const char* field)
 {
-  sprintf(m_fields[m_field_index], "%s\0", field);
+  sprintf(m_fields[m_field_index], "%s", field);
   m_field_index++;
 
   makeSentence();
@@ -143,7 +143,7 @@ NMEASentence::addField(const char* field)
 void
 NMEASentence::addField(const char field)
 {
-  sprintf(m_fields[m_field_index], "%c\0", field);
+  sprintf(m_fields[m_field_index], "%c", field);
   m_field_index++;
 
   makeSentence();
@@ -152,7 +152,7 @@ NMEASentence::addField(const char field)
 void
 NMEASentence::addField(const uint16_t field)
 {
-  sprintf(m_fields[m_field_index], "%u\0", field);
+  sprintf(m_fields[m_field_index], "%u", field);
   m_field_index++;
 
   makeSentence();
