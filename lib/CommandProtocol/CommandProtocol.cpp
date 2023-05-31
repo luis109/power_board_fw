@@ -89,12 +89,11 @@ CommandProtocol::sendCommand(Command& cmd)
 bool
 CommandProtocol::sendAck()
 {
-  NMEASentence sentence;
-
-  sentence.addField("ACK");
-  sentence.getSentence(m_bfr);
-
-  return SerialUtils::sendMessage(m_bfr) > 0;
+  Command cmd;
+  cmd.m_type = CMD_TYPE_INFO;
+  cmd.m_dev = CMD_DEV_ACK;
+  
+  return sendCommand(cmd);
 }
 
 bool
